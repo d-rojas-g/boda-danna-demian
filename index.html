@@ -1,94 +1,31 @@
 <!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Boda Danna y Demian</title>
 <style>
-body{font-family:Arial,sans-serif;max-width:680px;margin:60px auto;padding:0 20px}
-h1{margin-bottom:8px}.box{margin-top:30px}
-input{width:100%;box-sizing:border-box;padding:14px;font-size:18px}
-button{margin-top:12px;padding:12px 20px;font-size:16px;cursor:pointer}
-#resultado{margin-top:30px;padding:20px;border:1px solid #ddd;display:none}
-.error{color:#a00}.cargando{color:#666}li{margin:8px 0}
-</style>
-</head>
+body{font-family:Arial,sans-serif;max-width:680px;margin:60px auto;padding:0 20px}h1{margin-bottom:8px}.box{margin-top:30px}
+input{width:100%;box-sizing:border-box;padding:14px;font-size:18px}button{margin-top:12px;padding:12px 20px;font-size:16px;cursor:pointer}
+button:disabled{opacity:.65;cursor:wait}#resultado{margin-top:30px;padding:20px;border:1px solid #ddd;display:none}.error{color:#a00}.cargando{color:#666}li{margin:8px 0}
+</style></head>
 <body>
-<h1>Boda Danna y Demian</h1>
-<p>Escribe tu nombre para consultar tu mesa.</p>
-<div class="box">
-<input id="nombre" type="text" placeholder="Tu nombre" autocomplete="name">
-<button id="buscarBtn" onclick="buscar()">Consultar mesa</button>
-</div>
-<div id="resultado"></div>
+<h1>Boda Danna y Demian</h1><p>Escribe tu nombre para consultar tu mesa.</p>
+<div class="box"><input id="nombre" type="text" placeholder="Tu nombre completo" autocomplete="name">
+<button id="buscarBtn" onclick="buscar()">Consultar mesa</button></div><div id="resultado"></div>
 <script>
-const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQyR71FYjFBIPvPvzrwtd0mPISzG0cWI4NEm4zOO_QnQq0CRmaNJ50a6qMPItAYXkhr-FoZc5aFvrb2/pub?output=csv";
-let invitados=[];
-
-function normalizar(t){
- return String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/\s+/g," ");
+const API_URL="https://script.google.com/macros/s/AKfycbwQH2GoASh5ztcy-Yw1zShnLR0UsI6k2COb5JFaaA4EkASNLr9QREyU6AS5s0-nSmIWug/exec";
+function buscar(){
+ const t=document.getElementById("nombre").value.trim(), r=document.getElementById("resultado"), b=document.getElementById("buscarBtn");
+ r.style.display="block"; if(!t){r.innerHTML='<p class="error">Escribe tu nombre para continuar.</p>';return;}
+ b.disabled=true;r.innerHTML='<p class="cargando">Consultando la lista...</p>';
+ const cb="respuesta_"+Date.now()+"_"+Math.floor(Math.random()*100000);
+ window[cb]=d=>{try{mostrar(d,r)}finally{delete window[cb];const s=document.getElementById(cb);if(s)s.remove();b.disabled=false;}};
+ const s=document.createElement("script");s.id=cb;s.src=API_URL+"?nombre="+encodeURIComponent(t)+"&callback="+cb;
+ s.onerror=()=>{r.innerHTML='<p class="error">No pudimos consultar la lista. Intenta nuevamente.</p>';delete window[cb];s.remove();b.disabled=false;};
+ document.body.appendChild(s);
 }
-
-function parseCSV(texto){
- const filas=[]; let fila=[], campo="", comillas=false;
- for(let i=0;i<texto.length;i++){
-  const c=texto[i], n=texto[i+1];
-  if(c=='"'){
-   if(comillas && n=='"'){campo+='"';i++;} else comillas=!comillas;
-  } else if(c=="," && !comillas){fila.push(campo);campo="";}
-  else if((c=="\n"||c=="\r")&&!comillas){
-   if(c=="\r"&&n=="\n")i++;
-   fila.push(campo);campo="";
-   if(fila.some(x=>x.trim()!=""))filas.push(fila);
-   fila=[];
-  } else campo+=c;
- }
- if(campo!==""||fila.length){fila.push(campo);if(fila.some(x=>x.trim()!=""))filas.push(fila);}
- if(filas.length<2)return [];
- const encabezados=filas[0].map(normalizar);
- const ni=encabezados.indexOf("nombre"), mi=encabezados.indexOf("mesa");
- if(ni<0||mi<0)throw Error("La hoja debe tener las columnas Nombre y Mesa.");
- return filas.slice(1).map(f=>({nombre:(f[ni]||"").trim(),mesa:(f[mi]||"").trim()})).filter(x=>x.nombre&&x.mesa);
+function mostrar(d,r){
+ if(!d||!d.ok){r.innerHTML='<p class="error">'+esc(d&&d.error||"No encontramos ese nombre.")+'</p><p>Prueba escribiendo tu nombre y apellido.</p>';return;}
+ r.innerHTML='<h2>¡Hola, '+esc(d.nombre)+'!</h2><p>Tu mesa es la <strong>'+esc(d.mesa)+'</strong>.</p><h3>Personas en tu mesa</h3><ul>'+d.personas.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>';
 }
-
-async function cargarInvitados(){
- const r=await fetch(CSV_URL+"&t="+Date.now(),{cache:"no-store"});
- if(!r.ok)throw Error("No se pudo consultar Google Sheets.");
- const datos=parseCSV(await r.text());
- if(!datos.length)throw Error("No se encontraron invitados.");
- invitados=datos;
-}
-
-async function buscar(){
- const texto=document.getElementById("nombre").value;
- const resultado=document.getElementById("resultado");
- const boton=document.getElementById("buscarBtn");
- resultado.style.display="block";
- if(!normalizar(texto)){resultado.innerHTML='<p class="error">Escribe tu nombre.</p>';return;}
- boton.disabled=true;
- resultado.innerHTML='<p class="cargando">Consultando la lista...</p>';
- try{
-  await cargarInvitados();
-  const invitado=invitados.find(x=>normalizar(x.nombre)===normalizar(texto));
-  if(!invitado){
-   resultado.innerHTML='<p class="error">No encontramos ese nombre. Revisa que esté escrito como aparece en tu invitación.</p>';
-   return;
-  }
-  const companeros=invitados.filter(x=>x.mesa===invitado.mesa).map(x=>x.nombre);
-  resultado.innerHTML='<h2>¡Hola, '+escapeHtml(invitado.nombre)+'!</h2>'+
-   '<p>Tu mesa es la <strong>'+escapeHtml(invitado.mesa)+'</strong>.</p>'+
-   '<h3>Personas en tu mesa</h3><ul>'+
-   companeros.map(x=>'<li>'+escapeHtml(x)+'</li>').join("")+'</ul>';
- }catch(e){
-  console.error(e);
-  resultado.innerHTML='<p class="error">No pudimos consultar la lista en este momento. Intenta nuevamente.</p>';
- }finally{boton.disabled=false;}
-}
-
-function escapeHtml(t){
- return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-}
-document.getElementById("nombre").addEventListener("keydown",e=>{if(e.key==="Enter")buscar();});
-</script>
-</body>
-</html>
+function esc(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+document.getElementById("nombre").addEventListener("keydown",e=>{if(e.key==="Enter")buscar()});
+</script></body></html>
