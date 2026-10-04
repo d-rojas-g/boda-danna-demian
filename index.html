@@ -432,8 +432,8 @@
             id="nameInput"
             type="text"
             autocomplete="name"
-            placeholder="Tu nombre completo"
-            aria-label="Tu nombre completo"
+            placeholder="Tu nombre"
+            aria-label="Tu nombre"
             required
           >
           <button id="searchButton" type="submit">Encontrar mi mesa</button>
@@ -570,12 +570,12 @@
         } else if (data.status === "ambiguous") {
           showError(
             "💌 Encontramos más de una persona con ese nombre. " +
-            "Para asegurarnos de darte el lugar correcto, escríbenos tu nombre completo."
+            "Para asegurarnos de darte el lugar correcto, escríbenos tu nombre y tu primer apellido."
           );
         } else {
           showError(
             "🤍 Queremos encontrar tu lugar. No logramos encontrar ese nombre en nuestra lista. " +
-            "Intenta escribir tu nombre completo nuevamente."
+            "Intenta escribir tu nombre y primer apellido nuevamente."
           );
         }
       } catch (err) {
