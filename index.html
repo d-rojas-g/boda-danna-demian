@@ -1,31 +1,593 @@
-<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Boda Danna y Demian</title>
-<style>
-body{font-family:Arial,sans-serif;max-width:680px;margin:60px auto;padding:0 20px}h1{margin-bottom:8px}.box{margin-top:30px}
-input{width:100%;box-sizing:border-box;padding:14px;font-size:18px}button{margin-top:12px;padding:12px 20px;font-size:16px;cursor:pointer}
-button:disabled{opacity:.65;cursor:wait}#resultado{margin-top:30px;padding:20px;border:1px solid #ddd;display:none}.error{color:#a00}.cargando{color:#666}li{margin:8px 0}
-</style></head>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danna & Demian | Nuestra boda</title>
+
+  <meta name="theme-color" content="#f7f2eb">
+  <meta name="description" content="Consulta tu mesa para la boda de Danna y Demian.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --cream: #f7f2eb;
+      --paper: #fffdf9;
+      --ink: #3e3934;
+      --muted: #81766d;
+      --accent: #9b806d;
+      --accent-dark: #806756;
+      --line: rgba(126, 103, 86, .22);
+      --shadow: 0 22px 60px rgba(76, 57, 43, .10);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(179, 145, 117, .10), transparent 25%),
+        radial-gradient(circle at 90% 90%, rgba(179, 145, 117, .08), transparent 28%),
+        var(--cream);
+      color: var(--ink);
+      font-family: "Montserrat", sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "✦";
+      position: fixed;
+      z-index: -1;
+      color: rgba(155, 128, 109, .16);
+      font-size: 170px;
+      font-family: "Cormorant Garamond", serif;
+      pointer-events: none;
+    }
+
+    body::before { top: -55px; left: -55px; }
+    body::after { right: -55px; bottom: -55px; transform: rotate(18deg); }
+
+    .page {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 28px 18px 42px;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 253, 249, .90);
+      border: 1px solid rgba(126, 103, 86, .16);
+      box-shadow: var(--shadow);
+      border-radius: 28px;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px solid var(--line);
+      border-radius: 21px;
+      pointer-events: none;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 62px 34px 36px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 11px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(58px, 13vw, 88px);
+      line-height: .78;
+      font-weight: 500;
+      letter-spacing: -.03em;
+      color: #51463e;
+    }
+
+    .amp {
+      display: block;
+      margin: 12px 0 7px;
+      font-size: .48em;
+      line-height: 1;
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .date {
+      margin: 20px 0 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 21px;
+      letter-spacing: .18em;
+      color: var(--muted);
+    }
+
+    .divider {
+      width: 105px;
+      height: 1px;
+      margin: 30px auto;
+      background: var(--line);
+      position: relative;
+    }
+
+    .divider::after {
+      content: "♡";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -54%);
+      background: var(--paper);
+      padding: 0 10px;
+      color: var(--accent);
+      font-size: 17px;
+    }
+
+    .intro {
+      max-width: 570px;
+      margin: 0 auto;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 26px;
+      line-height: 1.18;
+      color: #62564e;
+    }
+
+    .quote {
+      max-width: 570px;
+      margin: 26px auto 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 20px;
+      line-height: 1.35;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .location {
+      margin-top: 18px;
+      font-size: 11px;
+      letter-spacing: .12em;
+      line-height: 1.8;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .search-section {
+      padding: 22px 34px 48px;
+      text-align: center;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 32px;
+      font-weight: 600;
+    }
+
+    .section-subtitle {
+      margin: 0 auto 22px;
+      max-width: 450px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .form {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid rgba(126, 103, 86, .28);
+      border-radius: 999px;
+      background: rgba(255,255,255,.72);
+      padding: 16px 20px;
+      color: var(--ink);
+      font: 15px "Montserrat", sans-serif;
+      outline: none;
+      text-align: center;
+      transition: border .2s, box-shadow .2s, background .2s;
+    }
+
+    input::placeholder { color: #a69b92; }
+
+    input:focus {
+      background: white;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(155, 128, 109, .10);
+    }
+
+    button {
+      width: 100%;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 999px;
+      padding: 16px 22px;
+      background: var(--accent-dark);
+      color: white;
+      font: 600 12px "Montserrat", sans-serif;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform .2s, opacity .2s, box-shadow .2s;
+      box-shadow: 0 9px 24px rgba(93, 70, 54, .16);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(93, 70, 54, .20);
+    }
+
+    button:disabled {
+      opacity: .65;
+      cursor: wait;
+      transform: none;
+    }
+
+    .result {
+      max-width: 570px;
+      margin: 25px auto 0;
+      display: none;
+      animation: appear .55s ease both;
+    }
+
+    .result.show { display: block; }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .welcome {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .welcome-small {
+      margin: 8px 0 22px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .table-box {
+      padding: 22px 18px 24px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(247,242,235,.62);
+    }
+
+    .table-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+    }
+
+    .table-number {
+      margin: 5px 0 3px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 62px;
+      line-height: .9;
+      color: var(--accent-dark);
+      font-weight: 600;
+    }
+
+    .table-caption {
+      margin: 0 0 18px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .guests-title {
+      margin: 18px 0 10px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .guest-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 7px;
+    }
+
+    .guest-list li {
+      padding: 9px 10px;
+      border-bottom: 1px solid rgba(126, 103, 86, .10);
+      color: #5f554e;
+      font-size: 12px;
+    }
+
+    .guest-list li:last-child { border-bottom: 0; }
+
+    .closing {
+      margin: 28px auto 0;
+      max-width: 490px;
+      color: var(--muted);
+      font-family: "Cormorant Garamond", serif;
+      font-size: 21px;
+      line-height: 1.3;
+      font-style: italic;
+    }
+
+    .error {
+      margin-top: 18px;
+      padding: 15px 18px;
+      border-radius: 16px;
+      background: rgba(154, 111, 94, .08);
+      border: 1px solid rgba(154, 111, 94, .18);
+      color: #765c50;
+      font-size: 12px;
+      line-height: 1.6;
+      display: none;
+    }
+
+    .error.show { display: block; }
+
+    .footer {
+      padding: 28px 28px 38px;
+      text-align: center;
+      border-top: 1px solid rgba(126, 103, 86, .12);
+    }
+
+    .footer-quote {
+      margin: 0 auto 15px;
+      max-width: 500px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 19px;
+      line-height: 1.35;
+      color: #776b63;
+      font-style: italic;
+    }
+
+    .footer-date {
+      margin: 0;
+      color: var(--accent);
+      font-size: 10px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 520px) {
+      .page { padding: 12px 10px 26px; }
+      .card { border-radius: 22px; }
+      .card::before { inset: 8px; border-radius: 16px; }
+      .hero { padding: 48px 25px 28px; }
+      .search-section { padding: 18px 25px 38px; }
+      .intro { font-size: 23px; }
+      .quote { font-size: 18px; }
+      .location { font-size: 9px; }
+      .footer { padding: 25px 22px 32px; }
+    }
+  </style>
+</head>
+
 <body>
-<h1>Boda Danna y Demian</h1><p>Escribe tu nombre para consultar tu mesa.</p>
-<div class="box"><input id="nombre" type="text" placeholder="Tu nombre completo" autocomplete="name">
-<button id="buscarBtn" onclick="buscar()">Consultar mesa</button></div><div id="resultado"></div>
-<script>
-const API_URL="https://script.google.com/macros/s/AKfycbwQH2GoASh5ztcy-Yw1zShnLR0UsI6k2COb5JFaaA4EkASNLr9QREyU6AS5s0-nSmIWug/exec";
-function buscar(){
- const t=document.getElementById("nombre").value.trim(), r=document.getElementById("resultado"), b=document.getElementById("buscarBtn");
- r.style.display="block"; if(!t){r.innerHTML='<p class="error">Escribe tu nombre para continuar.</p>';return;}
- b.disabled=true;r.innerHTML='<p class="cargando">Consultando la lista...</p>';
- const cb="respuesta_"+Date.now()+"_"+Math.floor(Math.random()*100000);
- window[cb]=d=>{try{mostrar(d,r)}finally{delete window[cb];const s=document.getElementById(cb);if(s)s.remove();b.disabled=false;}};
- const s=document.createElement("script");s.id=cb;s.src=API_URL+"?nombre="+encodeURIComponent(t)+"&callback="+cb;
- s.onerror=()=>{r.innerHTML='<p class="error">No pudimos consultar la lista. Intenta nuevamente.</p>';delete window[cb];s.remove();b.disabled=false;};
- document.body.appendChild(s);
-}
-function mostrar(d,r){
- if(!d||!d.ok){r.innerHTML='<p class="error">'+esc(d&&d.error||"No encontramos ese nombre.")+'</p><p>Prueba escribiendo tu nombre y apellido.</p>';return;}
- r.innerHTML='<h2>¡Hola, '+esc(d.nombre)+'!</h2><p>Tu mesa es la <strong>'+esc(d.mesa)+'</strong>.</p><h3>Personas en tu mesa</h3><ul>'+d.personas.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>';
-}
-function esc(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
-document.getElementById("nombre").addEventListener("keydown",e=>{if(e.key==="Enter")buscar()});
-</script></body></html>
+  <main class="page">
+    <section class="card">
+
+      <header class="hero">
+        <p class="eyebrow">Nuestra boda</p>
+
+        <h1>
+          Danna
+          <span class="amp">&amp;</span>
+          Demian
+        </h1>
+
+        <p class="date">13 · 12 · 26</p>
+
+        <div class="divider"></div>
+
+        <p class="intro">
+          Nos casamos... y nos gustaría<br>
+          celebrar juntos.
+        </p>
+
+        <p class="quote">
+          “Yo te reconocería y te elegiría cada día, en todas las vidas,
+          en todas las existencias, en todos los universos,
+          y en todos me enamoraría de ti.”
+        </p>
+
+        <p class="location">
+          Hacienda Los Potrillos · Carretera a Tlacote, Qro.<br>
+          Recepción · 13:00 hrs
+        </p>
+      </header>
+
+      <section class="search-section">
+        <h2 class="section-title">Qué alegría tenerte con nosotros</h2>
+
+        <p class="section-subtitle">
+          Queremos que disfrutes cada momento de este día tan especial.
+          Escribe tu nombre y descubre el lugar que hemos preparado para ti.
+        </p>
+
+        <form class="form" id="lookupForm">
+          <input
+            id="nameInput"
+            type="text"
+            autocomplete="name"
+            placeholder="Tu nombre completo"
+            aria-label="Tu nombre completo"
+            required
+          >
+          <button id="searchButton" type="submit">Encontrar mi mesa</button>
+        </form>
+
+        <div id="error" class="error" role="alert"></div>
+
+        <div id="result" class="result" aria-live="polite"></div>
+      </section>
+
+      <footer class="footer">
+        <p class="footer-quote">
+          “No es quien te roba el corazón, es quien te hace sentir
+          que lo tienes de vuelta.”
+        </p>
+        <p class="footer-date">Danna &amp; Demian · 13 · 12 · 26</p>
+      </footer>
+
+    </section>
+  </main>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwQH2GoASh5ztcy-Yw1zShnLR0UsI6k2COb5JFaaA4EkASNLr9QREyU6AS5s0-nSmIWug/exec";
+
+    const form = document.getElementById("lookupForm");
+    const input = document.getElementById("nameInput");
+    const button = document.getElementById("searchButton");
+    const result = document.getElementById("result");
+    const error = document.getElementById("error");
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function showError(message) {
+      error.textContent = message;
+      error.classList.add("show");
+      result.classList.remove("show");
+      result.innerHTML = "";
+    }
+
+    function showResult(data) {
+      error.classList.remove("show");
+      error.textContent = "";
+
+      const guests = Array.isArray(data.guests) ? data.guests : [];
+      const list = guests.map(name =>
+        `<li>${escapeHTML(name)}</li>`
+      ).join("");
+
+      result.innerHTML = `
+        <p class="welcome">¡Bienvenido/a, ${escapeHTML(data.name)}! 🤍</p>
+
+        <p class="welcome-small">
+          Nos hace muy felices saber que celebrarás este día tan especial con nosotros.
+        </p>
+
+        <div class="table-box">
+          <p class="table-label">Tu lugar está en la</p>
+          <p class="table-number">${escapeHTML(data.table)}</p>
+          <p class="table-caption">Mesa</p>
+
+          <p class="guests-title">Esta mesa la compartirás con</p>
+          <ul class="guest-list">${list}</ul>
+        </div>
+
+        <p class="closing">
+          Gracias por acompañarnos en este momento tan importante.
+          Esperamos compartir contigo una noche llena de amor,
+          alegría y recuerdos inolvidables.
+        </p>
+      `;
+
+      result.classList.add("show");
+      result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function lookupName(name) {
+      return new Promise((resolve, reject) => {
+        const callbackName = "bodaCallback_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+        const script = document.createElement("script");
+
+        window[callbackName] = function(data) {
+          cleanup();
+          resolve(data);
+        };
+
+        function cleanup() {
+          delete window[callbackName];
+          script.remove();
+        }
+
+        script.onerror = function() {
+          cleanup();
+          reject(new Error("No fue posible conectar con el servidor."));
+        };
+
+        const params = new URLSearchParams({
+          nombre: name,
+          callback: callbackName
+        });
+
+        script.src = API_URL + "?" + params.toString();
+        document.body.appendChild(script);
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const name = input.value.trim();
+
+      if (!name) {
+        showError("🤍 Escribe tu nombre para que podamos encontrar tu lugar.");
+        input.focus();
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Buscando tu lugar...";
+      error.classList.remove("show");
+      result.classList.remove("show");
+
+      try {
+        const data = await lookupName(name);
+
+        if (data.status === "ok") {
+          showResult(data);
+        } else if (data.status === "ambiguous") {
+          showError(
+            "💌 Encontramos más de una persona con ese nombre. " +
+            "Para asegurarnos de darte el lugar correcto, escríbenos tu nombre completo."
+          );
+        } else {
+          showError(
+            "🤍 Queremos encontrar tu lugar. No logramos encontrar ese nombre en nuestra lista. " +
+            "Intenta escribir tu nombre completo nuevamente."
+          );
+        }
+      } catch (err) {
+        showError(
+          "✨ Tuvimos un pequeño problema al buscar tu lugar. " +
+          "Por favor, intenta nuevamente en unos momentos."
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = "Encontrar mi mesa";
+      }
+    });
+  </script>
+</body>
+</html>
