@@ -1,124 +1,94 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Boda Danna y Demian</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 680px; margin: 60px auto; padding: 0 20px; }
-    h1 { margin-bottom: 8px; }
-    .box { margin-top: 30px; }
-    input { width: 100%; box-sizing: border-box; padding: 14px; font-size: 18px; }
-    button { margin-top: 12px; padding: 12px 20px; font-size: 16px; cursor: pointer; }
-    #resultado { margin-top: 30px; padding: 20px; border: 1px solid #ddd; display: none; }
-    .error { color: #a00; }
-    li { margin: 8px 0; }
-    small { color: #666; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boda Danna y Demian</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:680px;margin:60px auto;padding:0 20px}
+h1{margin-bottom:8px}.box{margin-top:30px}
+input{width:100%;box-sizing:border-box;padding:14px;font-size:18px}
+button{margin-top:12px;padding:12px 20px;font-size:16px;cursor:pointer}
+#resultado{margin-top:30px;padding:20px;border:1px solid #ddd;display:none}
+.error{color:#a00}.cargando{color:#666}li{margin:8px 0}
+</style>
 </head>
 <body>
-  <h1>Boda Danna y Demian</h1>
-  <p>Escribe tu nombre para consultar tu mesa.</p>
-
-  <div class="box">
-    <input id="nombre" type="text" placeholder="Tu nombre">
-    <button onclick="buscar()">Consultar mesa</button>
-  </div>
-
-  <div id="resultado"></div>
-
+<h1>Boda Danna y Demian</h1>
+<p>Escribe tu nombre para consultar tu mesa.</p>
+<div class="box">
+<input id="nombre" type="text" placeholder="Tu nombre" autocomplete="name">
+<button id="buscarBtn" onclick="buscar()">Consultar mesa</button>
+</div>
+<div id="resultado"></div>
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyR71FYjFBIPvPvzrwtd0mPISzG0cWI4NEm4zOO_QnQq0CRmaNJ50a6qMPItAYXkhr-FoZc5aFvrb2/pub?output=csv";
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQyR71FYjFBIPvPvzrwtd0mPISzG0cWI4NEm4zOO_QnQq0CRmaNJ50a6qMPItAYXkhr-FoZc5aFvrb2/pub?output=csv";
+let invitados=[];
 
-const datosPrueba = [
-  {nombre:"Danna", mesa:"1"},
-  {nombre:"Demian", mesa:"1"},
-  {nombre:"Pilar", mesa:"2"}
-];
-
-let invitados = [];
-
-function normalizar(texto) {
-  return texto
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, " ");
+function normalizar(t){
+ return String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/\s+/g," ");
 }
 
-function parseCSV(texto) {
-  const lineas = texto.trim().split(/\r?\n/);
-  if (!lineas.length) return [];
-  return lineas.slice(1).map(linea => {
-    // Suficiente para el formato actual: Nombre,Mesa
-    const partes = linea.split(",");
-    return { nombre: (partes[0] || "").trim(), mesa: (partes[1] || "").trim() };
-  }).filter(x => x.nombre);
+function parseCSV(texto){
+ const filas=[]; let fila=[], campo="", comillas=false;
+ for(let i=0;i<texto.length;i++){
+  const c=texto[i], n=texto[i+1];
+  if(c=='"'){
+   if(comillas && n=='"'){campo+='"';i++;} else comillas=!comillas;
+  } else if(c=="," && !comillas){fila.push(campo);campo="";}
+  else if((c=="\n"||c=="\r")&&!comillas){
+   if(c=="\r"&&n=="\n")i++;
+   fila.push(campo);campo="";
+   if(fila.some(x=>x.trim()!=""))filas.push(fila);
+   fila=[];
+  } else campo+=c;
+ }
+ if(campo!==""||fila.length){fila.push(campo);if(fila.some(x=>x.trim()!=""))filas.push(fila);}
+ if(filas.length<2)return [];
+ const encabezados=filas[0].map(normalizar);
+ const ni=encabezados.indexOf("nombre"), mi=encabezados.indexOf("mesa");
+ if(ni<0||mi<0)throw Error("La hoja debe tener las columnas Nombre y Mesa.");
+ return filas.slice(1).map(f=>({nombre:(f[ni]||"").trim(),mesa:(f[mi]||"").trim()})).filter(x=>x.nombre&&x.mesa);
 }
 
-async function cargarInvitados() {
-  try {
-    const respuesta = await fetch(CSV_URL, {cache: "no-store"});
-    if (!respuesta.ok) throw new Error("No se pudo consultar la hoja");
-    const texto = await respuesta.text();
-    const datos = parseCSV(texto);
-    if (!datos.length) throw new Error("La hoja no contiene datos");
-    invitados = datos;
-  } catch (e) {
-    // Permite probar la página incluso si el navegador bloquea el CSV.
-    invitados = datosPrueba;
-    console.warn("Usando datos de prueba:", e);
+async function cargarInvitados(){
+ const r=await fetch(CSV_URL+"&t="+Date.now(),{cache:"no-store"});
+ if(!r.ok)throw Error("No se pudo consultar Google Sheets.");
+ const datos=parseCSV(await r.text());
+ if(!datos.length)throw Error("No se encontraron invitados.");
+ invitados=datos;
+}
+
+async function buscar(){
+ const texto=document.getElementById("nombre").value;
+ const resultado=document.getElementById("resultado");
+ const boton=document.getElementById("buscarBtn");
+ resultado.style.display="block";
+ if(!normalizar(texto)){resultado.innerHTML='<p class="error">Escribe tu nombre.</p>';return;}
+ boton.disabled=true;
+ resultado.innerHTML='<p class="cargando">Consultando la lista...</p>';
+ try{
+  await cargarInvitados();
+  const invitado=invitados.find(x=>normalizar(x.nombre)===normalizar(texto));
+  if(!invitado){
+   resultado.innerHTML='<p class="error">No encontramos ese nombre. Revisa que esté escrito como aparece en tu invitación.</p>';
+   return;
   }
+  const companeros=invitados.filter(x=>x.mesa===invitado.mesa).map(x=>x.nombre);
+  resultado.innerHTML='<h2>¡Hola, '+escapeHtml(invitado.nombre)+'!</h2>'+
+   '<p>Tu mesa es la <strong>'+escapeHtml(invitado.mesa)+'</strong>.</p>'+
+   '<h3>Personas en tu mesa</h3><ul>'+
+   companeros.map(x=>'<li>'+escapeHtml(x)+'</li>').join("")+'</ul>';
+ }catch(e){
+  console.error(e);
+  resultado.innerHTML='<p class="error">No pudimos consultar la lista en este momento. Intenta nuevamente.</p>';
+ }finally{boton.disabled=false;}
 }
 
-async function buscar() {
-  if (!invitados.length) await cargarInvitados();
-
-  const texto = document.getElementById("nombre").value;
-  const buscado = normalizar(texto);
-  const resultado = document.getElementById("resultado");
-
-  if (!buscado) {
-    resultado.style.display = "block";
-    resultado.innerHTML = '<p class="error">Escribe tu nombre.</p>';
-    return;
-  }
-
-  const invitado = invitados.find(x => normalizar(x.nombre) === buscado);
-
-  resultado.style.display = "block";
-
-  if (!invitado) {
-    resultado.innerHTML =
-      '<p class="error">No encontramos ese nombre. Revisa que esté escrito como aparece en tu invitación.</p>';
-    return;
-  }
-
-  const mesa = invitado.mesa;
-  const companeros = invitados
-    .filter(x => String(x.mesa) === String(mesa))
-    .map(x => x.nombre);
-
-  resultado.innerHTML = `
-    <h2>¡Hola, ${escapeHtml(invitado.nombre)}!</h2>
-    <p>Tu mesa es la <strong>${escapeHtml(mesa)}</strong>.</p>
-    <h3>Personas en tu mesa</h3>
-    <ul>${companeros.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
-  `;
+function escapeHtml(t){
+ return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 }
-
-function escapeHtml(text) {
-  return String(text).replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
-  }[c]));
-}
-
-document.getElementById("nombre").addEventListener("keydown", e => {
-  if (e.key === "Enter") buscar();
-});
-
-cargarInvitados();
+document.getElementById("nombre").addEventListener("keydown",e=>{if(e.key==="Enter")buscar();});
 </script>
 </body>
 </html>
