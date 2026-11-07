@@ -432,8 +432,8 @@
             id="nameInput"
             type="text"
             autocomplete="name"
-            placeholder="Tu nombre"
-            aria-label="Tu nombre"
+            placeholder="Tu nombre completo"
+            aria-label="Tu nombre completo"
             required
           >
           <button id="searchButton" type="submit">Encontrar mi mesa</button>
@@ -456,7 +456,7 @@
   </main>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwQH2GoASh5ztcy-Yw1zShnLR0UsI6k2COb5JFaaA4EkASNLr9QREyU6AS5s0-nSmIWug/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzCwT6AnfkR94idVP0w3asl-ywEOF55bfKQ-v10aTEfSYHAb3-BxlLpK9huDEFeDtwnpg/exec";
 
     const form = document.getElementById("lookupForm");
     const input = document.getElementById("nameInput");
@@ -570,12 +570,12 @@
         } else if (data.status === "ambiguous") {
           showError(
             "💌 Encontramos más de una persona con ese nombre. " +
-            "Para asegurarnos de darte el lugar correcto, escríbenos tu nombre y tu primer apellido."
+            "Para asegurarnos de darte el lugar correcto, escríbenos tu nombre completo."
           );
         } else {
           showError(
             "🤍 Queremos encontrar tu lugar. No logramos encontrar ese nombre en nuestra lista. " +
-            "Intenta escribir tu nombre y primer apellido nuevamente."
+            "Intenta escribir tu nombre completo nuevamente."
           );
         }
       } catch (err) {
